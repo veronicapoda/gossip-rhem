@@ -601,3 +601,238 @@ plot(sm(p, 6)) +
     axis.text.x = element_text(size = 18),    # X-axis tick labels
     axis.text.y = element_text(size = 18),    # Y-axis tick labels
   )
+
+
+
+
+
+
+
+
+
+
+################################################################################
+# A more complex model including interaction effects
+################################################################################
+
+# Evaluating potential gender interaction effects in the dynamics of gossiping
+
+library(mgcv)
+data_df$log_sender_degree <- log(data_df$sender_degree + 1)
+data_df$log_receiver_degree <- log(data_df$receiver_degree + 1)
+
+
+
+formula_te_re <- z ~ girl.alter +
+  
+  s(time_continuous, k = 4) +
+  
+  te(log_receiver_degree, girl.ego, by = factor(girl.alter)) +
+  te(log_sender_degree, girl.ego, by = factor(girl.alter)) +
+  te(subset_repetition, girl.ego, by = factor(girl.alter)) +
+  
+  s(ClassGroup, bs = "re") +
+  s(ReceiverGroup, bs = "re") +
+  s(SenderGroup, bs = "re") +
+  
+  offset(offset_log)
+
+
+model_te_re <- bam(
+  formula_te_re,
+  data = data_df,
+  family = binomial(link = "cloglog"),
+  method = "fREML",
+  select = TRUE,
+  discrete = TRUE
+)
+
+summary(model_te_re)
+BIC(model_te_re)
+
+################################################################################
+# MODEL DIAGNOSTICS
+################################################################################
+
+plot(model_te_re, pages = 1, scale = 0)
+gam.vcomp(model_te_re)
+
+
+
+################################################################################
+# 3D SURFACE PLOTS (vis.gam)
+################################################################################
+
+par(mfrow = c(2, 3))
+
+# SENDER DEGREE x GIRL EGO x GIRL ALTER = MALE 
+par(mar = c(5, 6, 4, 2), cex.lab = 1.5, cex.axis = 1.5, lwd = 2, font.lab = 1)
+vis.gam(model_te_re,
+        view = c("log_sender_degree", "girl.ego"),
+        cond = list(girl.alter = 0),
+        target = "link",
+        theta = 30, phi = 30,
+        xlab = "sender degree",    
+        ylab = "girl ego",      
+        color = "terrain",      # "topo", "heat", "cm", "terrain", "gray" or "bw"
+        plot.type = "contour",
+        contour.col = "black",
+        main = "male receiver",  # girl alter = 0
+        ticktype = "detailed",
+        cex.main = 2,
+        labcex = 1.5,
+        lwd = 2,
+        nlevels = 12) 
+
+# SENDER DEGREE x GIRL EGO x GIRL ALTER = FEMALE 
+par(mar = c(5, 6, 4, 2), cex.lab = 1.5, cex.axis = 1.5, lwd = 2, font.lab = 1)
+vis.gam(model_te_re,
+        view = c("log_sender_degree", "girl.ego"),
+        cond = list(girl.alter = 1),
+        type = "link",
+        theta = 30, phi = 30,
+        xlab = "sender degree",    
+        ylab = "girl ego",     
+        color = "terrain",
+        plot.type = "contour",
+        contour.col = "black",
+        main = "female receiver",   # girl alter = 1
+        ticktype = "detailed",
+        cex.main = 2,
+        labcex = 1.5,
+        lwd = 2,
+        nlevels = 12)
+
+# RECEIVER DEGREE x GIRL EGO x GIRL ALTER = MALE
+par(mar = c(5, 6, 4, 2), cex.lab = 1.5, cex.axis = 1.5, lwd = 2, font.lab = 1)
+vis.gam(model_te_re,
+        view = c("log_receiver_degree", "girl.ego"),
+        cond = list(girl.alter = 0),
+        target = "link",
+        theta = 30, phi = 30,
+        xlab = "receiver degree",    
+        ylab = "girl ego",      
+        color = "terrain",      # "topo", "heat", "cm", "terrain", "gray" or "bw"
+        plot.type = "contour",
+        contour.col = "black",
+        main = "male receiver",  # girl alter = 0
+        ticktype = "detailed",
+        cex.main = 2,
+        labcex = 1.5,
+        lwd = 2,
+        nlevels = 12)
+
+# RECEIVER DEGREE x GIRL EGO x GIRL ALTER = FEMALE 
+par(mar = c(5, 6, 4, 2), cex.lab = 1.5, cex.axis = 1.5, lwd = 2, font.lab = 1)
+vis.gam(model_te_re,
+        view = c("log_receiver_degree", "girl.ego"),
+        cond = list(girl.alter = 1),
+        type = "link",
+        theta = 30, phi = 30,
+        xlab = "receiver degree",    
+        ylab = "girl ego",     
+        color = "terrain",
+        plot.type = "contour",
+        contour.col = "black",
+        main = "female receiver",   # girl alter = 1
+        ticktype = "detailed",
+        cex.main = 2,
+        labcex = 1.5,
+        lwd = 2,
+        nlevels = 12)
+
+# SUBSET REPETITION x GIRL EGO x GIRL ALTER = MALE 
+par(mar = c(5, 6, 4, 2), cex.lab = 1.5, cex.axis = 1.5, lwd = 2, font.lab = 1)
+vis.gam(model_te_re,
+        view = c("subset_repetition", "girl.ego"),
+        cond = list(girl.alter = 0),
+        target = "link",
+        theta = 30, phi = 30,
+        xlab = "subset repetition",    
+        ylab = "girl ego",      
+        color = "terrain",      # "topo", "heat", "cm", "terrain", "gray" or "bw"
+        plot.type = "contour",
+        contour.col = "black",
+        main = "male receiver",  # girl alter = 0
+        ticktype = "detailed",
+        cex.main = 2,
+        labcex = 1.5,
+        lwd = 2,
+        nlevels = 12)
+
+# SUBSET REPETITION x GIRL EGO x GIRL ALTER = FEMALE
+par(mar = c(5, 6, 4, 2), cex.lab = 1.5, cex.axis = 1.5, lwd = 2, font.lab = 1)
+vis.gam(model_te_re,
+        view = c("subset_repetition", "girl.ego"),
+        cond = list(girl.alter = 1),
+        type = "link",
+        theta = 30, phi = 30,
+        xlab = "subset repetition",    
+        ylab = "girl ego",     
+        color = "terrain",
+        plot.type = "contour",
+        contour.col = "black",
+        main = "female receiver",   # girl alter = 1
+        ticktype = "detailed",
+        cex.main = 2,
+        labcex = 1.5,
+        lwd = 2,
+        nlevels = 12)
+
+
+
+
+
+
+
+
+################################################################################
+# PREDICTIONS ON FULL RISK SET
+################################################################################
+
+cat("\n--- Predictions ---\n")
+
+eta_hat <- predict(model_te_re, newdata = data_df, type = "link")
+mu_hat  <- predict(model_te_re, newdata = data_df, type = "response")
+risk_hat <- exp(eta_hat)
+
+data_df$mu_hat <- mu_hat
+data_df$eta_hat <- eta_hat
+data_df$risk_hat <- risk_hat
+
+################################################################################
+# SAVE RESULTS
+################################################################################
+
+save(model_te_re,
+     file = "model_te_re_revision_final.RData")
+
+save(data_df,
+     file = "prediction_riskset_revision_final.RData")
+
+################################################################################
+# HISTOGRAM OF RANKS
+################################################################################
+
+r1 <- rank(mu_hat)[data_df$z == 1] # events
+r0 <- rank(mu_hat)[data_df$z == 0] # non-events
+
+# 1st hist (events) 
+hist(r1, xlim = c(1, 300000), ylim = c(0,0.00015), prob = TRUE, 
+     col = rgb(0.2, 0.2, 0.2, 0.6), border = "black",
+     xlab = "rank of predicted intensity",
+     ylab = "density",
+     cex.lab = 1.5, 
+     cex.axis = 1.3,   
+     main = "")
+
+# 2nd hist (non-events)
+hist(r0, add = TRUE, prob = TRUE, 
+     col = rgb(0.8, 0.8, 0.8, 0.6), border = "black")
+
+legend(x = 8000, y = 0.00015, , legend = c("events", "non-events"),
+       fill = c(rgb(0.2,0.2,0.2,0.6), rgb(0.8,0.8,0.8,0.6)), border = "black",
+       bty = "n",
+       cex = 1.5) 
+
+dev.off()
